@@ -29,8 +29,12 @@ with polling to get the next database record.
 
 
     function job(dbRecordInstance, callback){
-      $.post(SERVICE_URL, dbRecordInstance).complete(callback);
+      // POST to a service endpoint, for example.
+
+      request.post(SERVICE_URL, dbRecordInstance).complete(callback);
     }
+
+
 
 A SQL-MQ worker must also be provided with a Sequelize Class
 object, which is queried using the `predicate` option:
@@ -38,9 +42,7 @@ object, which is queried using the `predicate` option:
     worker = new SqlMqWorker({
       Class: Payment, 
       predicate: { where: { state: "toSend" }},
-      job: function(paymentRecordInstance, function(instance){
-         
-      });
+      job: sendPaymentToServceJob
     })
 
     worker.start();
