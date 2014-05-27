@@ -9,14 +9,16 @@ function Poller(opts){
   this._predicate = opts.predicate;
   this._timeout = opts.timeout || 1000;
   this._job = opts.job || function(instance, callback) {
-    console.log(instance);
     callback();
   };
 }
 
-Poller.prototype = {
+Poller.prototype = Object.create(Object.prototype);
+Poller.prototype.constructor = Poller;
 
-  getInstance: function(callback) {
+Poller.prototype =  {
+
+  getInstance:  function(callback) {
     this._Class.find(this._predicate).complete(function(err, instance) {
       if (err) {
         callback(err); 
@@ -26,34 +28,32 @@ Poller.prototype = {
         callback('no instance found');
       }
    });
-  }
+  },
   
   workNextInstance: function(callback) {
-    var self = this;
     this.getInstance(function(err, instance){
       if (err) {
         setTimeout(function() {
           callback(callback);
-        }, self.timeout); return;
+        }, this.timeout); return;
       }
-      job(instanceToWork, function(err, workedInstance){
+      this._job(instance, function(err, workedInstance){
         if (err){
           setTimeout(function() {
             callback(callback);
-          }, self.timeout); return;
+          }, this.timeout); return;
         } else {
           callback(callback);
         }
-      });
-    }
-  }
+      }.bind(this));
+    }.bind(this));
+  },
 
   start: function(){
-    this.workNextInstance(this.workNextInstance);
+    this.workNextInstance(this.workNextInstance.bind(this));
   }
-};
 
-
+}
 
 module.exports = Poller;
 
