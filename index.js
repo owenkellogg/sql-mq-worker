@@ -9,51 +9,35 @@ function Poller(opts){
   this._predicate = opts.predicate;
   this._timeout = opts.timeout || 1000;
   this._job = opts.job || function(instance, callback) {
-    console.log(instance);
     callback();
   };
 }
 
-Poller.prototype = {
+Poller.prototype = Object.create(Object.prototype);
+Poller.prototype.constructor = Poller;
 
-  getInstance: function(callback) {
-    this._Class.find(this._predicate).complete(function(err, instance) {
-      if (err) {
-        callback(err); 
-      } else if (instance) {
-        callback(null, instance);
-      } else {
-        callback('no instance found');
-      }
-   });
-  }
-  
-  workNextInstance: function(callback) {
-    var self = this;
-    this.getInstance(function(err, instance){
-      if (err) {
-        setTimeout(function() {
-          callback(callback);
-        }, self.timeout); return;
-      }
-      job(instanceToWork, function(err, workedInstance){
-        if (err){
-          setTimeout(function() {
-            callback(callback);
-          }, self.timeout); return;
-        } else {
-          callback(callback);
-        }
-      });
-    }
-  }
-
+Poller.prototype =  {
   start: function(){
-    this.workNextInstance(this.workNextInstance);
+    this._workNextInstance();
+  },
+  _workNextInstance: function() {
+    var self = this;
+    self.__getInstance(function(error, instance){
+      if (error || !instance) {
+        return self._loop();
+      }
+      self._job(instance, self._loop.bind(self));
+    }.bind(self));
+  },
+  __getInstance:  function(callback) {
+    var self = this;
+    self._Class.find(self._predicate).complete(callback);
+  },
+  _loop: function() {
+    var self = this;
+    setTimeout(self._workNextInstance.bind(self), self._timeout);
   }
-};
-
-
+}
 
 module.exports = Poller;
 
