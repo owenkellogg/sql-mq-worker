@@ -22,20 +22,24 @@ Poller.prototype =  {
   },
   _workNextInstance: function() {
     var self = this;
-    self.__getInstance(function(error, instance){
+    self._getInstance(function(error, instance){
       if (error || !instance) {
-        return self._loop();
+        return self._loop(self._timeout);
       }
       self._job(instance, self._loop.bind(self));
     }.bind(self));
   },
-  __getInstance:  function(callback) {
+  _getInstance:  function(callback) {
     var self = this;
     self._Class.find(self._predicate).complete(callback);
   },
-  _loop: function() {
+  _loop: function(timeout) {
     var self = this;
-    setTimeout(self._workNextInstance.bind(self), self._timeout);
+    if (timeout) {
+      setTimeout(self._workNextInstance.bind(self), timeout);
+    } else {
+      setImmediate(self._workNextInstance.bind(self));
+    }
   }
 }
 
